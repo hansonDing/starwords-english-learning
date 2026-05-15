@@ -1,17 +1,17 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Play, Pause, SkipForward, Calendar, Sparkles } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Calendar, Sparkles, Music } from 'lucide-react';
 
-/* ---- 每日视频主题 ---- */
+/* ---- 每日视频主题 + 旁白音频 ---- */
 const DAILY_THEMES = [
-  { day: 0, title: '小猫的森林冒险', enTitle: "The Cat's Forest Adventure", desc: '一只小猫在魔法森林中探索，遇到闪闪发光的小精灵' },
-  { day: 1, title: '小狗的草地嬉戏', enTitle: 'The Dog Plays in the Meadow', desc: '小狗在阳光明媚的草地上和蝴蝶一起玩耍' },
-  { day: 2, title: '小鸟的彩虹之旅', enTitle: "The Bird's Rainbow Journey", desc: '小鸟飞越彩虹河，花瓣在空中飞舞' },
-  { day: 3, title: '小金鱼的海洋世界', enTitle: "The Goldfish's Ocean World", desc: '小金鱼在水晶般清澈的水中畅游' },
-  { day: 4, title: '小兔子的花田跳跃', enTitle: 'The Rabbit Hops in the Flower Field', desc: '小白兔在五彩花田中欢快地跳跃' },
-  { day: 5, title: '苹果的小山丘之旅', enTitle: "The Apple's Hill Adventure", desc: '红苹果滚下绿色的小山丘，开出小花' },
-  { day: 6, title: '日出时分的村庄', enTitle: 'The Village at Sunrise', desc: '金色的太阳从宁静的村庄升起' },
+  { day: 0, title: '小猫的森林冒险', enTitle: "The Cat's Forest Adventure", desc: '一只小猫在魔法森林中探索，遇到闪闪发光的小精灵', audio: '/audio/narrate01-cat.mp3' },
+  { day: 1, title: '小狗的草地嬉戏', enTitle: 'The Dog Plays in the Meadow', desc: '小狗在阳光明媚的草地上和蝴蝶一起玩耍', audio: '/audio/narrate02-dog.mp3' },
+  { day: 2, title: '小鸟的彩虹之旅', enTitle: "The Bird's Rainbow Journey", desc: '小鸟飞越彩虹河，花瓣在空中飞舞', audio: '/audio/narrate03-bird.mp3' },
+  { day: 3, title: '小金鱼的海洋世界', enTitle: "The Goldfish's Ocean World", desc: '小金鱼在水晶般清澈的水中畅游', audio: '/audio/narrate04-fish.mp3' },
+  { day: 4, title: '小兔子的花田跳跃', enTitle: 'The Rabbit Hops in the Flower Field', desc: '小白兔在五彩花田中欢快地跳跃', audio: '/audio/narrate05-rabbit.mp3' },
+  { day: 5, title: '苹果的小山丘之旅', enTitle: "The Apple's Hill Adventure", desc: '红苹果滚下绿色的小山丘，开出小花', audio: '/audio/narrate06-apple.mp3' },
+  { day: 6, title: '日出时分的村庄', enTitle: 'The Village at Sunrise', desc: '金色的太阳从宁静的村庄升起', audio: '/audio/narrate07-sun.mp3' },
 ];
 
 const VIDEOS = [
@@ -27,42 +27,49 @@ const VIDEOS = [
   '/videos/anim10-tree-reading.mp4',
 ];
 
-/* 根据日期决定今天播放的视频 */
 function getTodayIndex(): number {
-  const today = new Date().getDay(); // 0-6 Sunday-Saturday
-  return today;
+  return new Date().getDay();
 }
 
 export default function DailyVideo() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [todayIdx, setTodayIdx] = useState(getTodayIndex);
 
   const theme = DAILY_THEMES[todayIdx];
 
-  /* 今天的视频列表（3个视频拼接） */
-  const todayVideos = useMemo(() => {
-    const baseIdx = (todayIdx * 2) % VIDEOS.length;
-    return [
-      VIDEOS[baseIdx],
-      VIDEOS[(baseIdx + 1) % VIDEOS.length],
-      VIDEOS[(baseIdx + 2) % VIDEOS.length],
-    ];
+  const todayVideo = useMemo(() => {
+    return VIDEOS[(todayIdx * 2) % VIDEOS.length];
   }, [todayIdx]);
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+  /* Sync video and audio */
+  const syncPlay = useCallback(() => {
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    if (!video || !audio) return;
+
+    if (video.paused) {
+      video.play().catch(() => {});
+      audio.play().catch(() => {});
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      audio.pause();
+      setIsPlaying(false);
     }
-  };
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = !audio.muted;
+    setIsMuted(audio.muted);
+  }, []);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -73,8 +80,9 @@ export default function DailyVideo() {
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
-    if (videoRef.current && !isNaN(val)) {
+    if (videoRef.current && audioRef.current && !isNaN(val)) {
       videoRef.current.currentTime = val;
+      audioRef.current.currentTime = val;
       setProgress(val);
     }
   };
@@ -82,12 +90,24 @@ export default function DailyVideo() {
   const handleVideoEnded = () => {
     setIsPlaying(false);
     setProgress(0);
+    if (audioRef.current) audioRef.current.currentTime = 0;
   };
 
-  const handleNextVideo = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = videoRef.current.duration || 0;
-    }
+  const handleChangeDay = (offset: number) => {
+    if (videoRef.current) videoRef.current.pause();
+    if (audioRef.current) audioRef.current.pause();
+    setIsPlaying(false);
+    setProgress(0);
+    setDuration(0);
+    setTodayIdx((prev) => (prev + offset + 7) % 7);
+  };
+
+  const handleSelectDay = (idx: number) => {
+    if (videoRef.current) videoRef.current.pause();
+    if (audioRef.current) audioRef.current.pause();
+    setIsPlaying(false);
+    setProgress(0);
+    setTodayIdx(idx);
   };
 
   const formatTime = (s: number) => {
@@ -97,32 +117,24 @@ export default function DailyVideo() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const handleChangeDay = (offset: number) => {
-    setTodayIdx((prev) => (prev + offset + 7) % 7);
-    setIsPlaying(false);
-    setProgress(0);
-    setDuration(0);
-  };
-
-  /* Play today video automatically on load */
+  /* Load new video/audio when day changes */
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.src = todayVideos[0];
+    if (videoRef.current && audioRef.current) {
+      videoRef.current.src = todayVideo;
       videoRef.current.load();
+      audioRef.current.src = theme.audio;
+      audioRef.current.load();
+      audioRef.current.muted = isMuted;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayIdx]);
+  }, [todayIdx, todayVideo, theme.audio, isMuted]);
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-space-navy via-[#0a0a2e] to-space-navy text-white overflow-x-hidden relative">
-      {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[15%] left-[25%] w-1 h-1 bg-star-gold rounded-full animate-pulse" />
         <div className="absolute top-[40%] right-[20%] w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.7s' }} />
-        <div className="absolute bottom-[25%] left-[15%] w-1 h-1 bg-nebula-purple rounded-full animate-pulse" style={{ animationDelay: '1.2s' }} />
       </div>
 
-      {/* Back button */}
       <button
         onClick={() => navigate('/')}
         className="absolute top-4 left-4 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
@@ -144,7 +156,7 @@ export default function DailyVideo() {
             </h1>
           </div>
           <p className="text-lavender-mist/60 font-noto-sc text-sm">
-            每天一段唯美英文动画
+            每天一段唯美英文动画 + 英文儿歌旁白
           </p>
         </motion.div>
 
@@ -163,9 +175,7 @@ export default function DailyVideo() {
           </button>
           <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10">
             <Calendar size={16} className="text-nebula-purple" />
-            <span className="font-nunito font-bold text-sm">
-              {theme.title}
-            </span>
+            <span className="font-nunito font-bold text-sm">{theme.title}</span>
           </div>
           <button
             onClick={() => handleChangeDay(1)}
@@ -175,6 +185,18 @@ export default function DailyVideo() {
           </button>
         </motion.div>
 
+        {/* Audio narration hint */}
+        <motion.div
+          className="flex items-center justify-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-nebula-purple/10 border border-nebula-purple/20 self-center mx-auto w-fit"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Music size={14} className="text-nebula-purple" />
+          <span className="text-xs text-lavender-mist/60 font-noto-sc">英文儿歌旁白</span>
+          <span className="text-xs text-lavender-mist/40 font-nunito italic">{theme.enTitle}</span>
+        </motion.div>
+
         {/* Video Player */}
         <motion.div
           className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 shadow-2xl"
@@ -182,30 +204,61 @@ export default function DailyVideo() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {/* Video */}
+          {/* Hidden audio element for narration */}
+          <audio
+            ref={audioRef}
+            src={theme.audio}
+            preload="metadata"
+            loop
+          />
+
           <video
             ref={videoRef}
             className="w-full aspect-video object-cover"
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleVideoEnded}
+            onClick={syncPlay}
             playsInline
             preload="metadata"
             loop
           >
-            <source src={todayVideos[0]} type="video/mp4" />
+            <source src={todayVideo} type="video/mp4" />
           </video>
 
-          {/* Overlay controls (shown when paused) */}
+          {/* Overlay play button (shown when paused) */}
           {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer" onClick={syncPlay}>
               <motion.button
-                onClick={togglePlay}
                 className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
                 whileTap={{ scale: 0.9 }}
               >
                 <Play size={32} className="text-white ml-1" />
               </motion.button>
             </div>
+          )}
+
+          {/* Audio toggle button */}
+          <button
+            onClick={toggleMute}
+            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors z-10"
+          >
+            {isMuted ? (
+              <VolumeX size={18} className="text-coral-red" />
+            ) : (
+              <Volume2 size={18} className="text-success-green" />
+            )}
+          </button>
+
+          {/* Narration text overlay */}
+          {isPlaying && !isMuted && (
+            <motion.div
+              className="absolute bottom-3 left-3 right-16 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <p className="text-xs text-white/80 font-nunito italic">{theme.enTitle}</p>
+            </motion.div>
           )}
         </motion.div>
 
@@ -235,20 +288,21 @@ export default function DailyVideo() {
           {/* Buttons */}
           <div className="flex items-center justify-center gap-4">
             <button
-              onClick={togglePlay}
-              className="w-12 h-12 rounded-full bg-gradient-to-r from-star-gold to-[#FFE55C] flex items-center justify-center shadow-glow-gold hover:scale-105 transition-transform"
-            >
-              {isPlaying ? (
-                <Pause size={22} className="text-space-navy" />
-              ) : (
-                <Play size={22} className="text-space-navy ml-0.5" />
-              )}
-            </button>
-            <button
-              onClick={handleNextVideo}
+              onClick={toggleMute}
               className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
             >
-              <SkipForward size={18} />
+              {isMuted ? <VolumeX size={18} className="text-coral-red" /> : <Volume2 size={18} className="text-success-green" />}
+            </button>
+
+            <button
+              onClick={syncPlay}
+              className="w-14 h-14 rounded-full bg-gradient-to-r from-star-gold to-[#FFE55C] flex items-center justify-center shadow-glow-gold hover:scale-105 transition-transform"
+            >
+              {isPlaying ? (
+                <Pause size={26} className="text-space-navy" />
+              ) : (
+                <Play size={26} className="text-space-navy ml-0.5" />
+              )}
             </button>
           </div>
         </motion.div>
@@ -277,14 +331,15 @@ export default function DailyVideo() {
             {DAILY_THEMES.map((_theme, i) => {
               const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
               const isToday = i === getTodayIndex();
+              const isSelected = i === todayIdx;
               return (
                 <button
                   key={i}
-                  onClick={() => { setTodayIdx(i); setIsPlaying(false); setProgress(0); }}
+                  onClick={() => handleSelectDay(i)}
                   className={`flex flex-col items-center py-2 rounded-xl transition-all ${
                     isToday
                       ? 'bg-nebula-purple/30 border border-nebula-purple/40'
-                      : i === todayIdx
+                      : isSelected
                       ? 'bg-white/10 border border-white/20'
                       : 'bg-white/5 border border-transparent hover:bg-white/10'
                   }`}
@@ -292,7 +347,7 @@ export default function DailyVideo() {
                   <span className={`text-xs font-nunito ${isToday ? 'text-star-gold' : 'text-lavender-mist/40'}`}>
                     {dayNames[i]}
                   </span>
-                  <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isToday ? 'bg-star-gold' : 'bg-lavender-mist/20'}`} />
+                  <Music size={10} className={`mt-1 ${isToday ? 'text-star-gold' : 'text-lavender-mist/20'}`} />
                 </button>
               );
             })}
