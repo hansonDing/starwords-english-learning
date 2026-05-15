@@ -5,13 +5,13 @@ import { ArrowLeft, Play, Pause, Volume2, VolumeX, Calendar, Sparkles, Music } f
 
 /* ---- 每日视频主题 + 旁白音频 ---- */
 const DAILY_THEMES = [
-  { day: 0, title: '小猫的森林冒险', enTitle: "The Cat's Forest Adventure", desc: '一只小猫在魔法森林中探索，遇到闪闪发光的小精灵', audio: '/audio/narrate01-cat.mp3' },
-  { day: 1, title: '小狗的草地嬉戏', enTitle: 'The Dog Plays in the Meadow', desc: '小狗在阳光明媚的草地上和蝴蝶一起玩耍', audio: '/audio/narrate02-dog.mp3' },
-  { day: 2, title: '小鸟的彩虹之旅', enTitle: "The Bird's Rainbow Journey", desc: '小鸟飞越彩虹河，花瓣在空中飞舞', audio: '/audio/narrate03-bird.mp3' },
-  { day: 3, title: '小金鱼的海洋世界', enTitle: "The Goldfish's Ocean World", desc: '小金鱼在水晶般清澈的水中畅游', audio: '/audio/narrate04-fish.mp3' },
-  { day: 4, title: '小兔子的花田跳跃', enTitle: 'The Rabbit Hops in the Flower Field', desc: '小白兔在五彩花田中欢快地跳跃', audio: '/audio/narrate05-rabbit.mp3' },
-  { day: 5, title: '苹果的小山丘之旅', enTitle: "The Apple's Hill Adventure", desc: '红苹果滚下绿色的小山丘，开出小花', audio: '/audio/narrate06-apple.mp3' },
-  { day: 6, title: '日出时分的村庄', enTitle: 'The Village at Sunrise', desc: '金色的太阳从宁静的村庄升起', audio: '/audio/narrate07-sun.mp3' },
+  { day: 0, title: '小猫的森林冒险', enTitle: "The Cat's Forest Adventure", desc: '一只小猫在魔法森林中探索，遇到闪闪发光的小精灵', audio: '/audio/song01-cat.mp3' },
+  { day: 1, title: '小狗的草地嬉戏', enTitle: 'The Dog Plays in the Meadow', desc: '小狗在阳光明媚的草地上和蝴蝶一起玩耍', audio: '/audio/song02-dog.mp3' },
+  { day: 2, title: '小鸟的彩虹之旅', enTitle: "The Bird's Rainbow Journey", desc: '小鸟飞越彩虹河，花瓣在空中飞舞', audio: '/audio/song03-bird.mp3' },
+  { day: 3, title: '小金鱼的海洋世界', enTitle: "The Goldfish's Ocean World", desc: '小金鱼在水晶般清澈的水中畅游', audio: '/audio/song04-fish.mp3' },
+  { day: 4, title: '小兔子的花田跳跃', enTitle: 'The Rabbit Hops in the Flower Field', desc: '小白兔在五彩花田中欢快地跳跃', audio: '/audio/song05-rabbit.mp3' },
+  { day: 5, title: '苹果的小山丘之旅', enTitle: "The Apple's Hill Adventure", desc: '红苹果滚下绿色的小山丘，开出小花', audio: '/audio/song06-apple.mp3' },
+  { day: 6, title: '日出时分的村庄', enTitle: 'The Village at Sunrise', desc: '金色的太阳从宁静的村庄升起', audio: '/audio/song07-sun.mp3' },
 ];
 
 const VIDEOS = [
