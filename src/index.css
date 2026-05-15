@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 60% 14%;
+    --foreground: 220 20% 98%;
+    --card: 220 40% 18%;
+    --card-foreground: 220 20% 98%;
+    --popover: 220 40% 18%;
+    --popover-foreground: 220 20% 98%;
+    --primary: 252 73% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 40% 22%;
+    --secondary-foreground: 220 20% 98%;
+    --muted: 220 40% 22%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 252 73% 67%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 71%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 252 73% 67%;
+    --input: 220 40% 25%;
+    --ring: 252 73% 67%;
+    --radius: 0.625rem;
+    --sidebar-background: 220 60% 14%;
+    --sidebar-foreground: 220 20% 98%;
+    --sidebar-primary: 252 73% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 40% 22%;
+    --sidebar-accent-foreground: 220 20% 98%;
+    --sidebar-border: 220 40% 25%;
+    --sidebar-ring: 252 73% 67%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: linear-gradient(180deg, #0B1D3A 0%, #1A0F3C 100%);
+    color: #F8F9FC;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    @apply border-border;
+  }
+}
+
+@layer utilities {
+  .gradient-space {
+    background: linear-gradient(180deg, #0B1D3A 0%, #1A0F3C 100%);
+  }
+
+  .gradient-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  }
+
+  .gradient-button {
+    background: linear-gradient(135deg, #7B68EE 0%, #6B5CD6 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+  }
+
+  .gradient-card-1 {
+    background: linear-gradient(135deg, #7B68EE, #9B8AF4);
+  }
+
+  .gradient-card-2 {
+    background: linear-gradient(135deg, #38BDF8, #7DD3FC);
+  }
+
+  .gradient-card-3 {
+    background: linear-gradient(135deg, #34D399, #6EE7B7);
+  }
+
+  .gradient-card-4 {
+    background: linear-gradient(135deg, #F472B6, #F9A8D4);
+  }
+
+  .gradient-card-5 {
+    background: linear-gradient(135deg, #FFD700, #FCD34D);
+  }
+
+  .text-shadow-glow {
+    text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(123, 104, 238, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 104, 238, 0.5);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

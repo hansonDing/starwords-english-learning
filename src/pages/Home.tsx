@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
 import { Rocket, Lock, Star, ChevronRight } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -17,6 +17,7 @@ const cardGradients = [
 ];
 
 export default function Home() {
+  const navigate = useNavigate();
   const { progress } = useLocalStorage();
 
   const currentWeekWords = VOCABULARY_DATA.filter(
@@ -185,6 +186,7 @@ export default function Home() {
               >
                 <div
                   className="relative w-[120px] h-[160px] rounded-2xl p-4 flex flex-col items-center justify-between shadow-md cursor-pointer transition-transform hover:scale-105"
+                  onClick={() => navigate(`/learn?wordIndex=${index}`)}
                   style={{
                     background: cardGradients[index % cardGradients.length],
                     opacity: isLearned ? 1 : 0.85,

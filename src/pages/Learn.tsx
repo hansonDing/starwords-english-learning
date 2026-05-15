@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { VOCABULARY_DATA } from '@/data/wordData';
@@ -30,6 +30,7 @@ function getWeekWords(week: number): Word[] {
 /* ------------------------------------------------------------------ */
 export default function Learn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { progress, markWordLearned } = useLocalStorage();
   const speech = useSpeech();
 
@@ -42,6 +43,14 @@ export default function Learn() {
 
   // State
   const [currentWordIndex, setCurrentWordIndex] = useState(() => {
+    // Check URL param first for direct word selection from Home page
+    const urlIndex = searchParams.get('wordIndex');
+    if (urlIndex !== null) {
+      const idx = parseInt(urlIndex, 10);
+      if (!isNaN(idx) && idx >= 0 && idx < currentWords.length) {
+        return idx;
+      }
+    }
     // Resume from first unlearned word
     for (let i = 0; i < currentWords.length; i++) {
       const wordProgress = progress.words.find(
