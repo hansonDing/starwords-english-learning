@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { VOCABULARY_DATA } from '@/data/wordData';
 import { useSpeech, calculatePronunciationScore } from '@/hooks/useSpeech';
+import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import type { ScoreResult } from '@/types';
 import StepIndicator from '@/components/learn/StepIndicator';
@@ -31,6 +32,7 @@ function getWeekWords(week: number): Word[] {
 export default function Learn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const auth = useAuth();
   const { progress, markWordLearned } = useLocalStorage();
   const speech = useSpeech();
 
@@ -140,7 +142,12 @@ export default function Learn() {
 
     setScoreResult(result);
     handleNextStep();
-  }, [currentWord, speech.transcript, handleNextStep]);
+
+    // Update user score if logged in
+    if (auth.isLoggedIn && result.score > 0) {
+      auth.updateUserScore(result.score);
+    }
+  }, [currentWord, speech.transcript, handleNextStep, auth]);
 
   const handleTryAgain = useCallback(() => {
     setStepDirection(-1);

@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Settings, RotateCcw, Volume2 } from 'lucide-react';
+import { Star, Settings, RotateCcw, Volume2, LogIn, LogOut, Trophy, Video, User } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAuth } from '@/hooks/useAuth';
 import { VOCABULARY_DATA } from '@/data/wordData';
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { progress, updateSettings, resetProgress } = useLocalStorage();
+  const auth = useAuth();
 
   const currentWeekWords = VOCABULARY_DATA.filter(
     (w) => w.week === progress.currentWeek
@@ -24,6 +27,19 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleLoginClick = () => {
+    if (auth.isLoggedIn) {
+      // Show confirmation before logout
+      if (window.confirm('确定要退出登录吗？')) {
+        auth.logout();
+        setMenuOpen(false);
+      }
+    } else {
+      navigate('/login');
+      setMenuOpen(false);
+    }
+  };
 
   return (
     <nav
@@ -99,91 +115,172 @@ export default function Navbar() {
         })}
       </div>
 
-      {/* Settings Button */}
-      <div className="relative" ref={menuRef}>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="w-8 h-8 rounded-full bg-gradient-to-br from-nebula-purple/30 to-nebula-purple/10 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer border border-nebula-purple/20"
-        >
-          <Settings size={16} className="text-soft-white" />
-        </button>
+      {/* Right: Settings + User */}
+      <div className="flex items-center gap-2">
+        {/* Settings Button */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-nebula-purple/30 to-nebula-purple/10 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer border border-nebula-purple/20"
+          >
+            <Settings size={16} className="text-soft-white" />
+          </button>
 
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="absolute right-0 top-10 w-52 rounded-xl p-2 z-50"
-              style={{
-                backgroundColor: 'rgba(11, 29, 58, 0.95)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(123, 104, 238, 0.2)',
-                boxShadow: '0 8px 32px rgba(123, 104, 238, 0.25)',
-              }}
-            >
-              <div className="px-3 py-2 text-soft-white/60 text-xs font-noto-sc">
-                语音速度: {Math.round(progress.settings.voiceSpeed * 100)}%
-              </div>
-              <input
-                type="range"
-                min="0.3"
-                max="1.5"
-                step="0.1"
-                value={progress.settings.voiceSpeed}
-                onChange={(e) =>
-                  updateSettings({ voiceSpeed: parseFloat(e.target.value) })
-                }
-                className="w-full mx-3 mb-2 accent-nebula-purple"
-                style={{ width: 'calc(100% - 24px)' }}
-              />
-
-              <button
-                onClick={() => {
-                  updateSettings({
-                    difficulty:
-                      progress.settings.difficulty === 'easy'
-                        ? 'normal'
-                        : progress.settings.difficulty === 'normal'
-                        ? 'hard'
-                        : 'easy',
-                  });
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute right-0 top-10 w-56 rounded-xl p-2 z-50"
+                style={{
+                  backgroundColor: 'rgba(11, 29, 58, 0.95)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(123, 104, 238, 0.2)',
+                  boxShadow: '0 8px 32px rgba(123, 104, 238, 0.25)',
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-soft-white/80 hover:bg-nebula-purple/20 transition-colors text-sm cursor-pointer"
               >
-                <Volume2 size={14} />
-                <span className="font-noto-sc">
-                  难度:{' '}
-                  {progress.settings.difficulty === 'easy'
-                    ? '简单'
-                    : progress.settings.difficulty === 'normal'
-                    ? '中等'
-                    : '困难'}
-                </span>
-              </button>
+                {/* User info */}
+                {auth.isLoggedIn && auth.user ? (
+                  <div className="px-3 py-2 mb-1 border-b border-nebula-purple/20">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-nebula-purple to-star-gold flex items-center justify-center">
+                        <span className="font-nunito font-bold text-xs text-white">
+                          {auth.user.displayName.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-white font-nunito font-bold text-sm">{auth.user.displayName}</p>
+                        <p className="text-lavender-mist/40 text-xs font-nunito">{auth.user.totalScore} 分</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
-              <div className="my-1 border-t border-nebula-purple/20" />
+                {/* Nav Links */}
+                <Link
+                  to="/leaderboard"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-soft-white/80 hover:bg-nebula-purple/20 transition-colors text-sm cursor-pointer no-underline"
+                >
+                  <Trophy size={14} className="text-star-gold" />
+                  <span className="font-noto-sc">评分天梯</span>
+                </Link>
 
-              <button
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      '确定要重置所有学习进度吗？此操作不可撤销！'
-                    )
-                  ) {
-                    resetProgress();
-                    setMenuOpen(false);
+                <Link
+                  to="/video"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-soft-white/80 hover:bg-nebula-purple/20 transition-colors text-sm cursor-pointer no-underline"
+                >
+                  <Video size={14} className="text-nebula-purple" />
+                  <span className="font-noto-sc">每日动画</span>
+                </Link>
+
+                <div className="my-1 border-t border-nebula-purple/20" />
+
+                {/* Voice speed */}
+                <div className="px-3 py-1.5 text-soft-white/60 text-xs font-noto-sc">
+                  语音速度: {Math.round(progress.settings.voiceSpeed * 100)}%
+                </div>
+                <input
+                  type="range"
+                  min="0.3"
+                  max="1.5"
+                  step="0.1"
+                  value={progress.settings.voiceSpeed}
+                  onChange={(e) =>
+                    updateSettings({ voiceSpeed: parseFloat(e.target.value) })
                   }
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-coral-red/80 hover:bg-coral-red/10 transition-colors text-sm cursor-pointer"
-              >
-                <RotateCcw size={14} />
-                <span className="font-noto-sc">重置进度</span>
-              </button>
-            </motion.div>
+                  className="w-full mx-3 mb-2 accent-nebula-purple"
+                  style={{ width: 'calc(100% - 24px)' }}
+                />
+
+                <button
+                  onClick={() => {
+                    updateSettings({
+                      difficulty:
+                        progress.settings.difficulty === 'easy'
+                          ? 'normal'
+                          : progress.settings.difficulty === 'normal'
+                          ? 'hard'
+                          : 'easy',
+                    });
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-soft-white/80 hover:bg-nebula-purple/20 transition-colors text-sm cursor-pointer"
+                >
+                  <Volume2 size={14} />
+                  <span className="font-noto-sc">
+                    难度:{' '}
+                    {progress.settings.difficulty === 'easy'
+                      ? '简单'
+                      : progress.settings.difficulty === 'normal'
+                      ? '中等'
+                      : '困难'}
+                  </span>
+                </button>
+
+                <div className="my-1 border-t border-nebula-purple/20" />
+
+                {/* Login / Logout */}
+                <button
+                  onClick={handleLoginClick}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-soft-white/80 hover:bg-nebula-purple/20 transition-colors text-sm cursor-pointer"
+                >
+                  {auth.isLoggedIn ? (
+                    <>
+                      <LogOut size={14} className="text-coral-red" />
+                      <span className="font-noto-sc text-coral-red">退出登录</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn size={14} className="text-success-green" />
+                      <span className="font-noto-sc">登录 / 注册</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="my-1 border-t border-nebula-purple/20" />
+
+                <button
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        '确定要重置所有学习进度吗？此操作不可撤销！'
+                      )
+                    ) {
+                      resetProgress();
+                      setMenuOpen(false);
+                    }
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-coral-red/80 hover:bg-coral-red/10 transition-colors text-sm cursor-pointer"
+                >
+                  <RotateCcw size={14} />
+                  <span className="font-noto-sc">重置进度</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* User Avatar (quick login/logout) */}
+        <button
+          onClick={() => auth.isLoggedIn ? navigate('/leaderboard') : navigate('/login')}
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer border border-white/20 overflow-hidden"
+          style={{
+            background: auth.isLoggedIn
+              ? 'linear-gradient(135deg, #7B68EE, #FFD700)'
+              : 'rgba(255,255,255,0.1)',
+          }}
+        >
+          {auth.isLoggedIn && auth.user ? (
+            <span className="font-nunito font-bold text-xs text-white">
+              {auth.user.displayName.charAt(0).toUpperCase()}
+            </span>
+          ) : (
+            <User size={16} className="text-lavender-mist/60" />
           )}
-        </AnimatePresence>
+        </button>
       </div>
     </nav>
   );
