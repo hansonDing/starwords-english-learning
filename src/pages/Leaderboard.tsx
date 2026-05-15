@@ -16,14 +16,15 @@ const rankIcons = [Crown, Medal, Star];
 
 export default function Leaderboard() {
   const navigate = useNavigate();
-  const auth = useAuth();
+  const { user, getAllUsers } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    setUsers(auth.getAllUsers());
-  }, [auth]);
+    setUsers(getAllUsers());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const currentUserId = auth.user?.id;
+  const currentUserId = user?.id;
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-space-navy via-[#0a0a2e] to-space-navy text-white overflow-x-hidden relative">
@@ -197,7 +198,7 @@ export default function Leaderboard() {
         </div>
 
         {/* Your rank hint */}
-        {auth.user && users.length > 0 && (
+        {user && users.length > 0 && (
           <motion.div
             className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-nebula-purple/20 to-star-gold/10 border border-nebula-purple/20 text-center"
             initial={{ opacity: 0 }}
@@ -205,10 +206,10 @@ export default function Leaderboard() {
             transition={{ delay: 0.5 }}
           >
             <p className="font-noto-sc text-sm text-lavender-mist/70">
-              你的当前排名：<span className="text-star-gold font-bold">第 {users.findIndex((u) => u.id === auth.user?.id) + 1 || '-'} 名</span>
+              你的当前排名：<span className="text-star-gold font-bold">第 {users.findIndex((u) => u.id === user?.id) + 1 || '-'} 名</span>
             </p>
             <p className="font-noto-sc text-xs text-lavender-mist/40 mt-1">
-              总得分：{auth.user.totalScore} | 已学：{auth.user.wordsLearned} 词
+              总得分：{user.totalScore} | 已学：{user.wordsLearned} 词
             </p>
           </motion.div>
         )}
