@@ -1,30 +1,88 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Calendar, Sparkles, Music } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Calendar, Sparkles, Star, ChevronRight } from 'lucide-react';
 
-/* ---- 每日视频主题 + 旁白音频 ---- */
-const DAILY_THEMES = [
-  { day: 0, title: '小猫的森林冒险', enTitle: "The Cat's Forest Adventure", desc: '一只小猫在魔法森林中探索，遇到闪闪发光的小精灵', audio: '/audio/song01-cat.mp3' },
-  { day: 1, title: '小狗的草地嬉戏', enTitle: 'The Dog Plays in the Meadow', desc: '小狗在阳光明媚的草地上和蝴蝶一起玩耍', audio: '/audio/song02-dog.mp3' },
-  { day: 2, title: '小鸟的彩虹之旅', enTitle: "The Bird's Rainbow Journey", desc: '小鸟飞越彩虹河，花瓣在空中飞舞', audio: '/audio/song03-bird.mp3' },
-  { day: 3, title: '小金鱼的海洋世界', enTitle: "The Goldfish's Ocean World", desc: '小金鱼在水晶般清澈的水中畅游', audio: '/audio/song04-fish.mp3' },
-  { day: 4, title: '小兔子的花田跳跃', enTitle: 'The Rabbit Hops in the Flower Field', desc: '小白兔在五彩花田中欢快地跳跃', audio: '/audio/song05-rabbit.mp3' },
-  { day: 5, title: '苹果的小山丘之旅', enTitle: "The Apple's Hill Adventure", desc: '红苹果滚下绿色的小山丘，开出小花', audio: '/audio/song06-apple.mp3' },
-  { day: 6, title: '日出时分的村庄', enTitle: 'The Village at Sunrise', desc: '金色的太阳从宁静的村庄升起', audio: '/audio/song07-sun.mp3' },
+/* ---- Super Simple Songs 经典视频 ---- */
+/* 使用 YouTube 嵌入播放器合法播放 */
+const YOUTUBE_EMBED = 'https://www.youtube.com/embed';
+
+interface VideoData {
+  day: number;
+  title: string;
+  enTitle: string;
+  desc: string;
+  youtubeId: string;
+  duration: string;
+}
+
+const DAILY_VIDEOS: VideoData[] = [
+  {
+    day: 0,
+    title: '一闪一闪小星星',
+    enTitle: 'Twinkle Twinkle Little Star',
+    desc: '最经典的英文摇篮曲，旋律优美，画面温馨',
+    youtubeId: 'xUDh55pS1oU',
+    duration: '2:48',
+  },
+  {
+    day: 1,
+    title: '老麦克唐纳有个农场',
+    enTitle: 'Old MacDonald Had A Farm',
+    desc: '认识农场动物，学习动物叫声',
+    youtubeId: 'LSsCsmKBwAHM',
+    duration: '3:10',
+  },
+  {
+    day: 2,
+    title: '公交车的轮子转呀转',
+    enTitle: 'The Wheels On The Bus',
+    desc: '经典巴士儿歌，认识上下、开关等动作',
+    youtubeId: 'RJ-5q6ErxDI',
+    duration: '2:49',
+  },
+  {
+    day: 3,
+    title: '五只小鸭子',
+    enTitle: 'Five Little Ducks',
+    desc: '学习数字1-5，温馨亲子儿歌',
+    youtubeId: 'pZw9veQ76fo',
+    duration: '2:54',
+  },
+  {
+    day: 4,
+    title: '头肩膀膝盖脚趾',
+    enTitle: 'Head Shoulders Knees And Toes',
+    desc: '边唱边动，认识身体部位',
+    youtubeId: 'QE-j7Ea-FNU',
+    duration: '1:22',
+  },
+  {
+    day: 5,
+    title: '如果你感到幸福',
+    enTitle: "If You're Happy And You Know It",
+    desc: '学习拍手、跺脚等动作，节奏欢快',
+    youtubeId: 'l4WNrvVb2lU',
+    duration: '1:58',
+  },
+  {
+    day: 6,
+    title: '宾果狗狗歌',
+    enTitle: 'BINGO',
+    desc: '学习拼写B-I-N-G-O，互动性强的拍手歌',
+    youtubeId: '0gv7oXHufVk',
+    duration: '2:08',
+  },
 ];
 
-const VIDEOS = [
-  '/videos/anim01-cat-forest.mp4',
-  '/videos/anim02-dog-meadow.mp4',
-  '/videos/anim03-bird-rainbow.mp4',
-  '/videos/anim04-fish-ocean.mp4',
-  '/videos/anim05-rabbit-field.mp4',
-  '/videos/anim06-apple-hill.mp4',
-  '/videos/anim07-sunrise.mp4',
-  '/videos/anim08-moon-stars.mp4',
-  '/videos/anim09-flower-garden.mp4',
-  '/videos/anim10-tree-reading.mp4',
+/* Bonus videos (playlist) */
+const BONUS_VIDEOS: VideoData[] = [
+  { day: -1, title: '一根小手指', enTitle: 'One Little Finger', desc: '学习身体部位英文', youtubeId: '7j6SOZKo3IU', duration: '1:41' },
+  { day: -1, title: '划呀划小船', enTitle: 'Row Row Row Your Boat', desc: '经典划船儿歌', youtubeId: '7btG8E1CtKE', duration: '1:34' },
+  { day: -1, title: '洗澡歌', enTitle: 'The Bath Song', desc: '洗澡时的快乐儿歌', youtubeId: 'Uv8T7YJxgQc', duration: '2:03' },
+  { day: -1, title: '十只小印第安人', enTitle: 'Ten Little Indians', desc: '学习数字1-10', youtubeId: 'J9N7S9q9g3Q', duration: '1:47' },
+  { day: -1, title: '苹果圆又圆', enTitle: 'Apple Round Apple Red', desc: '学习水果和形状', youtubeId: '3R_-Va6X8qA', duration: '1:45' },
+  { day: -1, title: '下雨歌', enTitle: 'Rain Rain Go Away', desc: '雨天儿歌，学习天气词汇', youtubeId: 'LFrKYjrIDs8', duration: '1:36' },
 ];
 
 function getTodayIndex(): number {
@@ -33,108 +91,39 @@ function getTodayIndex(): number {
 
 export default function DailyVideo() {
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [todayIdx, setTodayIdx] = useState(getTodayIndex);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const theme = DAILY_THEMES[todayIdx];
+  const current = DAILY_VIDEOS[todayIdx];
 
-  const todayVideo = useMemo(() => {
-    return VIDEOS[(todayIdx * 2) % VIDEOS.length];
-  }, [todayIdx]);
+  /* Build YouTube embed URL with autoplay params */
+  const embedUrl = `${YOUTUBE_EMBED}/${current.youtubeId}?rel=0&modestbranding=1&playsinline=1${isPlaying ? '&autoplay=1' : ''}`;
 
-  /* Sync video and audio */
-  const syncPlay = useCallback(() => {
-    const video = videoRef.current;
-    const audio = audioRef.current;
-    if (!video || !audio) return;
-
-    if (video.paused) {
-      video.play().catch(() => {});
-      audio.play().catch(() => {});
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      audio.pause();
-      setIsPlaying(false);
-    }
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true);
   }, []);
 
-  const toggleMute = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.muted = !audio.muted;
-    setIsMuted(audio.muted);
+  const handlePause = useCallback(() => {
+    setIsPlaying(false);
   }, []);
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setProgress(videoRef.current.currentTime);
-      setDuration(videoRef.current.duration || 0);
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (videoRef.current && audioRef.current && !isNaN(val)) {
-      videoRef.current.currentTime = val;
-      audioRef.current.currentTime = val;
-      setProgress(val);
-    }
-  };
-
-  const handleVideoEnded = () => {
-    setIsPlaying(false);
-    setProgress(0);
-    if (audioRef.current) audioRef.current.currentTime = 0;
-  };
-
-  const handleChangeDay = (offset: number) => {
-    if (videoRef.current) videoRef.current.pause();
-    if (audioRef.current) audioRef.current.pause();
-    setIsPlaying(false);
-    setProgress(0);
-    setDuration(0);
-    setTodayIdx((prev) => (prev + offset + 7) % 7);
-  };
 
   const handleSelectDay = (idx: number) => {
-    if (videoRef.current) videoRef.current.pause();
-    if (audioRef.current) audioRef.current.pause();
     setIsPlaying(false);
-    setProgress(0);
     setTodayIdx(idx);
   };
 
-  const formatTime = (s: number) => {
-    if (isNaN(s)) return '0:00';
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, '0')}`;
-  };
-
-  /* Load new video/audio when day changes */
-  useEffect(() => {
-    if (videoRef.current && audioRef.current) {
-      videoRef.current.src = todayVideo;
-      videoRef.current.load();
-      audioRef.current.src = theme.audio;
-      audioRef.current.load();
-      audioRef.current.muted = isMuted;
-    }
-  }, [todayIdx, todayVideo, theme.audio, isMuted]);
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-space-navy via-[#0a0a2e] to-space-navy text-white overflow-x-hidden relative">
+      {/* Background stars */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[15%] left-[25%] w-1 h-1 bg-star-gold rounded-full animate-pulse" />
         <div className="absolute top-[40%] right-[20%] w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.7s' }} />
       </div>
 
+      {/* Back button */}
       <button
         onClick={() => navigate('/')}
         className="absolute top-4 left-4 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
@@ -156,167 +145,90 @@ export default function DailyVideo() {
             </h1>
           </div>
           <p className="text-lavender-mist/60 font-noto-sc text-sm">
-            每天一段唯美英文动画 + 英文儿歌旁白
+            Super Simple Songs 经典英文儿歌
           </p>
         </motion.div>
 
         {/* Day selector */}
         <motion.div
-          className="flex items-center justify-center gap-4 mb-4"
+          className="flex items-center justify-center gap-3 mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
           <button
-            onClick={() => handleChangeDay(-1)}
+            onClick={() => handleSelectDay((todayIdx + 6) % 7)}
             className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <ArrowLeft size={18} />
           </button>
           <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10">
             <Calendar size={16} className="text-nebula-purple" />
-            <span className="font-nunito font-bold text-sm">{theme.title}</span>
+            <span className="font-nunito font-bold text-sm">{current.title}</span>
           </div>
           <button
-            onClick={() => handleChangeDay(1)}
+            onClick={() => handleSelectDay((todayIdx + 1) % 7)}
             className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors rotate-180"
           >
             <ArrowLeft size={18} />
           </button>
         </motion.div>
 
-        {/* Audio narration hint */}
-        <motion.div
-          className="flex items-center justify-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-nebula-purple/10 border border-nebula-purple/20 self-center mx-auto w-fit"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-        >
-          <Music size={14} className="text-nebula-purple" />
-          <span className="text-xs text-lavender-mist/60 font-noto-sc">英文儿歌旁白</span>
-          <span className="text-xs text-lavender-mist/40 font-nunito italic">{theme.enTitle}</span>
-        </motion.div>
-
-        {/* Video Player */}
+        {/* YouTube Video Player */}
         <motion.div
           className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 shadow-2xl"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {/* Hidden audio element for narration */}
-          <audio
-            ref={audioRef}
-            src={theme.audio}
-            preload="metadata"
-            loop
-          />
-
-          <video
-            ref={videoRef}
-            className="w-full aspect-video object-cover"
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={handleVideoEnded}
-            onClick={syncPlay}
-            playsInline
-            preload="metadata"
-            loop
-          >
-            <source src={todayVideo} type="video/mp4" />
-          </video>
-
-          {/* Overlay play button (shown when paused) */}
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer" onClick={syncPlay}>
-              <motion.button
-                className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
-                whileTap={{ scale: 0.9 }}
-              >
-                <Play size={32} className="text-white ml-1" />
-              </motion.button>
-            </div>
-          )}
-
-          {/* Audio toggle button */}
-          <button
-            onClick={toggleMute}
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors z-10"
-          >
-            {isMuted ? (
-              <VolumeX size={18} className="text-coral-red" />
-            ) : (
-              <Volume2 size={18} className="text-success-green" />
-            )}
-          </button>
-
-          {/* Narration text overlay */}
-          {isPlaying && !isMuted && (
-            <motion.div
-              className="absolute bottom-3 left-3 right-16 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              <p className="text-xs text-white/80 font-nunito italic">{theme.enTitle}</p>
-            </motion.div>
-          )}
+          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+            <iframe
+              ref={iframeRef}
+              className="absolute inset-0 w-full h-full"
+              src={embedUrl}
+              title={current.enTitle}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
         </motion.div>
 
-        {/* Controls */}
+        {/* Video Info */}
         <motion.div
           className="mt-4 bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {/* Progress bar */}
-          <div className="mb-3">
-            <input
-              type="range"
-              min={0}
-              max={duration || 100}
-              value={progress}
-              onChange={handleSeek}
-              className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-star-gold [&::-webkit-slider-thumb]:rounded-full"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-lavender-mist/40 font-nunito">{formatTime(progress)}</span>
-              <span className="text-xs text-lavender-mist/40 font-nunito">{formatTime(duration)}</span>
-            </div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-nunito font-bold text-lg text-white">{current.enTitle}</h2>
+            <span className="text-xs text-lavender-mist/40 bg-white/10 px-2 py-1 rounded-full font-nunito">
+              {current.duration}
+            </span>
           </div>
+          <p className="font-noto-sc text-sm text-lavender-mist/60">{current.desc}</p>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={toggleMute}
-              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-            >
-              {isMuted ? <VolumeX size={18} className="text-coral-red" /> : <Volume2 size={18} className="text-success-green" />}
-            </button>
-
-            <button
-              onClick={syncPlay}
-              className="w-14 h-14 rounded-full bg-gradient-to-r from-star-gold to-[#FFE55C] flex items-center justify-center shadow-glow-gold hover:scale-105 transition-transform"
-            >
-              {isPlaying ? (
-                <Pause size={26} className="text-space-navy" />
-              ) : (
+          {/* Play/Pause overlay controls */}
+          <div className="flex items-center justify-center gap-4 mt-4">
+            {!isPlaying ? (
+              <motion.button
+                onClick={handlePlay}
+                className="w-14 h-14 rounded-full bg-gradient-to-r from-star-gold to-[#FFE55C] flex items-center justify-center shadow-glow-gold hover:scale-105 transition-transform"
+                whileTap={{ scale: 0.95 }}
+              >
                 <Play size={26} className="text-space-navy ml-0.5" />
-              )}
-            </button>
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={handlePause}
+                className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                whileTap={{ scale: 0.95 }}
+              >
+                <Pause size={26} className="text-white" />
+              </motion.button>
+            )}
           </div>
-        </motion.div>
-
-        {/* Theme description */}
-        <motion.div
-          className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-nebula-purple/20 to-star-gold/10 border border-nebula-purple/20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <h3 className="font-noto-sc font-bold text-base text-white mb-1">{theme.title}</h3>
-          <p className="font-nunito text-sm text-lavender-mist/70 italic">{theme.enTitle}</p>
-          <p className="font-noto-sc text-sm text-lavender-mist/50 mt-2">{theme.desc}</p>
         </motion.div>
 
         {/* Weekly schedule */}
@@ -324,12 +236,11 @@ export default function DailyVideo() {
           className="mt-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.5 }}
         >
           <p className="font-noto-sc text-sm text-lavender-mist/50 mb-3 text-center">本周动画日程</p>
           <div className="grid grid-cols-7 gap-1">
-            {DAILY_THEMES.map((_theme, i) => {
-              const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+            {DAILY_VIDEOS.map((_v, i) => {
               const isToday = i === getTodayIndex();
               const isSelected = i === todayIdx;
               return (
@@ -347,12 +258,57 @@ export default function DailyVideo() {
                   <span className={`text-xs font-nunito ${isToday ? 'text-star-gold' : 'text-lavender-mist/40'}`}>
                     {dayNames[i]}
                   </span>
-                  <Music size={10} className={`mt-1 ${isToday ? 'text-star-gold' : 'text-lavender-mist/20'}`} />
+                  <Star size={10} className={`mt-1 ${isToday ? 'text-star-gold' : isSelected ? 'text-lavender-mist/40' : 'text-lavender-mist/20'}`} />
                 </button>
               );
             })}
           </div>
         </motion.div>
+
+        {/* Bonus Videos */}
+        <motion.div
+          className="mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <p className="font-noto-sc text-sm text-lavender-mist/50 mb-3 text-center">更多推荐儿歌</p>
+          <div className="space-y-2">
+            {BONUS_VIDEOS.map((video, i) => (
+              <motion.button
+                key={i}
+                onClick={() => {
+                  setIsPlaying(false);
+                  window.open(`${YOUTUBE_EMBED}/${video.youtubeId}`, '_blank');
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-left"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 + i * 0.05 }}
+              >
+                <div className="w-10 h-10 rounded-full bg-nebula-purple/30 flex items-center justify-center flex-shrink-0">
+                  <Play size={16} className="text-nebula-purple ml-0.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-nunito font-bold text-sm text-white truncate">{video.enTitle}</p>
+                  <p className="font-noto-sc text-xs text-lavender-mist/50 truncate">{video.title}</p>
+                </div>
+                <ChevronRight size={16} className="text-lavender-mist/30 flex-shrink-0" />
+                <span className="text-xs text-lavender-mist/30 font-nunito">{video.duration}</span>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Credit */}
+        <motion.p
+          className="text-center text-lavender-mist/30 text-xs font-noto-sc mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          视频来自 Super Simple Songs YouTube 频道
+        </motion.p>
       </div>
     </div>
   );
