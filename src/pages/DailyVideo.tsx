@@ -1,116 +1,121 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Play, Pause, Calendar, Sparkles, Star, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Calendar, Sparkles, Star, ChevronRight, ExternalLink } from 'lucide-react';
 
-/* ---- Super Simple Songs 经典视频 ---- */
-/* 使用 YouTube 嵌入播放器合法播放 */
-const YOUTUBE_EMBED = 'https://www.youtube.com/embed';
+/* ---- Bilibili Embed Base ---- */
+const BILI_EMBED = 'https://player.bilibili.com/player.html';
+const BILI_BVID = 'BV1prsnzGEeY';
 
 interface VideoData {
-  day: number;
+  page: number;
   title: string;
   enTitle: string;
   desc: string;
-  youtubeId: string;
-  duration: string;
+  category: string;
 }
 
+/* ---- 每日7首经典儿歌 ---- */
 const DAILY_VIDEOS: VideoData[] = [
   {
-    day: 0,
-    title: '一闪一闪小星星',
-    enTitle: 'Twinkle Twinkle Little Star',
-    desc: '最经典的英文摇篮曲，旋律优美，画面温馨',
-    youtubeId: 'xUDh55pS1oU',
-    duration: '2:48',
+    page: 2,
+    title: '划呀划小船',
+    enTitle: 'Row Row Row Your Boat',
+    desc: '坐上小船 gently down the stream，感受水波荡漾的快乐',
+    category: '自然',
   },
   {
-    day: 1,
-    title: '老麦克唐纳有个农场',
+    page: 4,
+    title: '早安大公鸡',
+    enTitle: 'Good Morning, Mr. Rooster',
+    desc: '跟着大公鸡学习早上好怎么说，开启美好的一天',
+    category: '日常',
+  },
+  {
+    page: 7,
+    title: '头肩膝脚趾',
+    enTitle: 'Head Shoulders Knees & Toes',
+    desc: '边唱边指，认识身体的各个部位',
+    category: '身体',
+  },
+  {
+    page: 10,
+    title: '老麦克唐纳',
     enTitle: 'Old MacDonald Had A Farm',
-    desc: '认识农场动物，学习动物叫声',
-    youtubeId: 'LSsCsmKBwAHM',
-    duration: '3:10',
+    desc: '参观农场，认识牛、猪、鸭等动物的叫声',
+    category: '动物',
   },
   {
-    day: 2,
-    title: '公交车的轮子转呀转',
-    enTitle: 'The Wheels On The Bus',
-    desc: '经典巴士儿歌，认识上下、开关等动作',
-    youtubeId: 'RJ-5q6ErxDI',
-    duration: '2:49',
-  },
-  {
-    day: 3,
-    title: '五只小鸭子',
-    enTitle: 'Five Little Ducks',
-    desc: '学习数字1-5，温馨亲子儿歌',
-    youtubeId: 'pZw9veQ76fo',
-    duration: '2:54',
-  },
-  {
-    day: 4,
-    title: '头肩膀膝盖脚趾',
-    enTitle: 'Head Shoulders Knees And Toes',
-    desc: '边唱边动，认识身体部位',
-    youtubeId: 'QE-j7Ea-FNU',
-    duration: '1:22',
-  },
-  {
-    day: 5,
+    page: 13,
     title: '如果你感到幸福',
     enTitle: "If You're Happy And You Know It",
-    desc: '学习拍手、跺脚等动作，节奏欢快',
-    youtubeId: 'l4WNrvVb2lU',
-    duration: '1:58',
+    desc: '拍拍手、跺跺脚，用动作表达快乐的心情',
+    category: '情绪',
   },
   {
-    day: 6,
-    title: '宾果狗狗歌',
-    enTitle: 'BINGO',
-    desc: '学习拼写B-I-N-G-O，互动性强的拍手歌',
-    youtubeId: '0gv7oXHufVk',
-    duration: '2:08',
+    page: 20,
+    title: '公交车的轮子',
+    enTitle: 'The Wheels On The Bus',
+    desc: '轮子在转呀转，雨刮器在刷呀刷，认识公交车的各个部件',
+    category: '交通',
+  },
+  {
+    page: 44,
+    title: '雨呀快走吧',
+    enTitle: 'Rain Rain Go Away',
+    desc: '小雨小雨快走开，好让我出去玩，学习天气相关的词汇',
+    category: '天气',
   },
 ];
 
-/* Bonus videos (playlist) */
-const BONUS_VIDEOS: VideoData[] = [
-  { day: -1, title: '一根小手指', enTitle: 'One Little Finger', desc: '学习身体部位英文', youtubeId: '7j6SOZKo3IU', duration: '1:41' },
-  { day: -1, title: '划呀划小船', enTitle: 'Row Row Row Your Boat', desc: '经典划船儿歌', youtubeId: '7btG8E1CtKE', duration: '1:34' },
-  { day: -1, title: '洗澡歌', enTitle: 'The Bath Song', desc: '洗澡时的快乐儿歌', youtubeId: 'Uv8T7YJxgQc', duration: '2:03' },
-  { day: -1, title: '十只小印第安人', enTitle: 'Ten Little Indians', desc: '学习数字1-10', youtubeId: 'J9N7S9q9g3Q', duration: '1:47' },
-  { day: -1, title: '苹果圆又圆', enTitle: 'Apple Round Apple Red', desc: '学习水果和形状', youtubeId: '3R_-Va6X8qA', duration: '1:45' },
-  { day: -1, title: '下雨歌', enTitle: 'Rain Rain Go Away', desc: '雨天儿歌，学习天气词汇', youtubeId: 'LFrKYjrIDs8', duration: '1:36' },
+/* ---- 更多推荐儿歌 ---- */
+const MORE_VIDEOS: VideoData[] = [
+  { page: 5, title: '打开合上', enTitle: 'Open Shut Them', desc: '学习打开和合上的动作', category: '动作' },
+  { page: 9, title: '甜美梦境', enTitle: 'Sweet Dreams', desc: '温柔的摇篮曲，伴你入睡', category: '睡前' },
+  { page: 12, title: '数一数动起来', enTitle: 'Count & Move', desc: '从1数到5，边数边做动作', category: '数字' },
+  { page: 15, title: '一根小手指', enTitle: 'One Little Finger', desc: '用手指指向上和向下', category: '身体' },
+  { page: 19, title: '我们去动物园', enTitle: "Let's Go To The Zoo", desc: '参观动物园，模仿动物的动作', category: '动物' },
+  { page: 22, title: '我有一个宠物', enTitle: 'I Have A Pet', desc: '认识猫、狗、鱼等宠物', category: '动物' },
+  { page: 36, title: '小雪人', enTitle: "I'm A Little Snowman", desc: '堆一个小雪人，学习身体部位', category: '身体' },
+  { page: 38, title: '我的泰迪熊', enTitle: 'My Teddy Bear', desc: '介绍我的玩具熊，学习颜色', category: '玩具' },
+  { page: 42, title: '你好', enTitle: 'Hello!', desc: '学习用英语打招呼', category: '日常' },
+  { page: 52, title: '洗澡歌', enTitle: 'The Bath Song', desc: '洗澡时用到的身体部位', category: '日常' },
+  { page: 57, title: '围成一个圈', enTitle: 'Make A Circle', desc: '大家一起围成圆，学习大小概念', category: '动作' },
+  { page: 63, title: '收拾歌', enTitle: 'Clean Up Song', desc: '玩完玩具记得收拾干净', category: '日常' },
 ];
 
 function getTodayIndex(): number {
   return new Date().getDay();
 }
 
+function buildEmbedUrl(page: number, autoplay: boolean): string {
+  return `${BILI_EMBED}?bvid=${BILI_BVID}&page=${page}&high_quality=1&autoplay=${autoplay ? 1 : 0}&danmaku=0`;
+}
+
 export default function DailyVideo() {
   const navigate = useNavigate();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [todayIdx, setTodayIdx] = useState(getTodayIndex);
   const [isPlaying, setIsPlaying] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const current = DAILY_VIDEOS[todayIdx];
+  const embedUrl = buildEmbedUrl(current.page, isPlaying);
 
-  /* Build YouTube embed URL with autoplay params */
-  const embedUrl = `${YOUTUBE_EMBED}/${current.youtubeId}?rel=0&modestbranding=1&playsinline=1${isPlaying ? '&autoplay=1' : ''}`;
-
-  const handlePlay = useCallback(() => {
-    setIsPlaying(true);
-  }, []);
-
-  const handlePause = useCallback(() => {
-    setIsPlaying(false);
-  }, []);
+  const handlePlay = useCallback(() => setIsPlaying(true), []);
+  const handlePause = useCallback(() => setIsPlaying(false), []);
 
   const handleSelectDay = (idx: number) => {
     setIsPlaying(false);
     setTodayIdx(idx);
+  };
+
+  const handleSelectMore = (video: VideoData) => {
+    setIsPlaying(false);
+    /* Navigate to the selected video page */
+    const pageIdx = DAILY_VIDEOS.findIndex((v) => v.page === video.page);
+    if (pageIdx >= 0) {
+      setTodayIdx(pageIdx);
+    }
   };
 
   const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
@@ -145,7 +150,7 @@ export default function DailyVideo() {
             </h1>
           </div>
           <p className="text-lavender-mist/60 font-noto-sc text-sm">
-            Super Simple Songs 经典英文儿歌
+            Super Simple Songs 经典英文儿歌 400+集
           </p>
         </motion.div>
 
@@ -165,6 +170,7 @@ export default function DailyVideo() {
           <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10">
             <Calendar size={16} className="text-nebula-purple" />
             <span className="font-nunito font-bold text-sm">{current.title}</span>
+            <span className="text-xs text-lavender-mist/40 bg-white/10 px-2 py-0.5 rounded-full font-noto-sc">{current.category}</span>
           </div>
           <button
             onClick={() => handleSelectDay((todayIdx + 1) % 7)}
@@ -174,7 +180,7 @@ export default function DailyVideo() {
           </button>
         </motion.div>
 
-        {/* YouTube Video Player */}
+        {/* Bilibili Video Player */}
         <motion.div
           className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 shadow-2xl"
           initial={{ y: 20, opacity: 0 }}
@@ -187,14 +193,14 @@ export default function DailyVideo() {
               className="absolute inset-0 w-full h-full"
               src={embedUrl}
               title={current.enTitle}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              style={{ border: 'none' }}
+              allow="autoplay; fullscreen"
               allowFullScreen
             />
           </div>
         </motion.div>
 
-        {/* Video Info */}
+        {/* Video Info & Controls */}
         <motion.div
           className="mt-4 bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10"
           initial={{ opacity: 0 }}
@@ -202,14 +208,22 @@ export default function DailyVideo() {
           transition={{ delay: 0.4 }}
         >
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-nunito font-bold text-lg text-white">{current.enTitle}</h2>
-            <span className="text-xs text-lavender-mist/40 bg-white/10 px-2 py-1 rounded-full font-nunito">
-              {current.duration}
-            </span>
+            <div>
+              <h2 className="font-nunito font-bold text-lg text-white">{current.enTitle}</h2>
+              <p className="font-noto-sc text-sm text-lavender-mist/60">{current.desc}</p>
+            </div>
+            <a
+              href={`https://www.bilibili.com/video/${BILI_BVID}?p=${current.page}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0"
+              title="在 Bilibili 打开"
+            >
+              <ExternalLink size={18} className="text-nebula-purple" />
+            </a>
           </div>
-          <p className="font-noto-sc text-sm text-lavender-mist/60">{current.desc}</p>
 
-          {/* Play/Pause overlay controls */}
+          {/* Play/Pause controls */}
           <div className="flex items-center justify-center gap-4 mt-4">
             {!isPlaying ? (
               <motion.button
@@ -265,26 +279,23 @@ export default function DailyVideo() {
           </div>
         </motion.div>
 
-        {/* Bonus Videos */}
+        {/* More Videos */}
         <motion.div
           className="mt-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
         >
-          <p className="font-noto-sc text-sm text-lavender-mist/50 mb-3 text-center">更多推荐儿歌</p>
-          <div className="space-y-2">
-            {BONUS_VIDEOS.map((video, i) => (
+          <p className="font-noto-sc text-sm text-lavender-mist/50 mb-3 text-center">更多经典儿歌</p>
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+            {MORE_VIDEOS.map((video, i) => (
               <motion.button
                 key={i}
-                onClick={() => {
-                  setIsPlaying(false);
-                  window.open(`${YOUTUBE_EMBED}/${video.youtubeId}`, '_blank');
-                }}
+                onClick={() => handleSelectMore(video)}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-left"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 + i * 0.05 }}
+                transition={{ delay: 0.6 + i * 0.03 }}
               >
                 <div className="w-10 h-10 rounded-full bg-nebula-purple/30 flex items-center justify-center flex-shrink-0">
                   <Play size={16} className="text-nebula-purple ml-0.5" />
@@ -293,8 +304,10 @@ export default function DailyVideo() {
                   <p className="font-nunito font-bold text-sm text-white truncate">{video.enTitle}</p>
                   <p className="font-noto-sc text-xs text-lavender-mist/50 truncate">{video.title}</p>
                 </div>
+                <span className="text-xs text-lavender-mist/30 bg-white/10 px-2 py-0.5 rounded-full font-noto-sc flex-shrink-0">
+                  {video.category}
+                </span>
                 <ChevronRight size={16} className="text-lavender-mist/30 flex-shrink-0" />
-                <span className="text-xs text-lavender-mist/30 font-nunito">{video.duration}</span>
               </motion.button>
             ))}
           </div>
@@ -307,7 +320,7 @@ export default function DailyVideo() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          视频来自 Super Simple Songs YouTube 频道
+          视频来自 Bilibili Super Simple Songs 合集（400+集）
         </motion.p>
       </div>
     </div>
